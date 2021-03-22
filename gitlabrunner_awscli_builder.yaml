@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Template
+labels:
+    template: gitlabrunnerwithaws-builder
+metadata:
+    annotations:
+        description: Generate an image with ose and aws cli using S2I
+        iconClass: icon-gitlab
+        tags: gitlabrunner-aws
+    name: gitlabrunnerwithawsclibuilder
+objects:
+    - apiVersion: v1
+      kind: ImageStream
+      metadata:
+          name: gitlabrunner-aws-cli
+      spec: {}
+    - apiVersion: v1
+      kind: BuildConfig
+      metadata:
+          annotations:
+              description: Modifies the ${IMAGE_NAME} to include aws cli
+          labels:
+              name: gitlabrunner-aws-cli
+          name: gitlabrunner-aws-cli
+      spec:
+          output:
+              to:
+                  kind: ImageStreamTag
+                  name: gitlabrunner-aws-cli:latest
+          resources: {}
+          source:
+              contextDir: ${MASTER_REPO_CONTEXTDIR}
+              git:
+                  ref: ${MASTER_REPO_REF}
+                  uri: ${MASTER_REPO_URL}
+              type: Git
+          strategy:
+              dockerStrategy:
+                  from:
+                      kind: ImageStreamTag
+                      name: ${IMAGE_NAME}
+                      namespace: ${NAMESPACE}
+          triggers:
+              - type: ConfigChange
+parameters:
+    - description: The name of an image to convert add aws cli image.
+      displayName: Image Name
+      name: IMAGE_NAME
+      required: true
+      value: ose-cli:latest
+    - description: Git repository with Dockerfile
+      displayName: Repository URL
+      name: MASTER_REPO_URL
+      value: https://github.com/forcebewithyou/gitlabrunner_aws.git
+    - description: The sub-directory inside the repository.
+      displayName: Context Directory
+      name: MASTER_REPO_CONTEXTDIR
+      value: /
+    - description: The git ref or tag to use for customization.
+      displayName: Git Reference
+      name: MASTER_REPO_REF
+      value: master
+    - description: The OpenShift Namespace ImageStream resides.
+      displayName: Jenkins ImageStream Namespace
+      name: NAMESPACE
+      value: goldenadvantage-dev
